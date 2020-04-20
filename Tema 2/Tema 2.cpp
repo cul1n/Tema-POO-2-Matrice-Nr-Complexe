@@ -50,8 +50,10 @@ public:
 
     //Supraincarcarea <<
     friend ostream& operator<<(ostream& output, Complex& ob) {
-        if (!ob.imaginar) 
+        if (!ob.imaginar)
             output << ob.real;
+        else if (!ob.real)
+            output << ob.imaginar << 'i';
         else 
             output << ob.real << " + " << ob.imaginar << 'i';
         return output;
@@ -62,6 +64,20 @@ public:
         real = ob.real;
         imaginar = ob.imaginar;
         return *this;
+    }
+
+    Complex operator+(const Complex& ob) {
+        Complex res;
+        res.real = real + ob.real;
+        res.imaginar = imaginar + ob.imaginar;
+        return res;
+    }
+
+    Complex operator*(const Complex& ob) {
+        Complex res;
+        res.real = real * ob.real - imaginar * ob.imaginar;
+        res.imaginar = real * ob.imaginar + imaginar * ob.real;
+        return res;
     }
 
     //Destructor
@@ -77,18 +93,17 @@ public:
     //Constructori
     //Default
     Matrice() {
-        cout << "Constructor Matrice Default" << endl;
+        v = nullptr;
     }
 
     //Parametrizat
     Matrice(int n, int m) {
-        cout << "Constructor Matrice Parametrizat" << endl;
-
+        v = nullptr;
     }
 
     //De copiere
     Matrice(const Matrice& mat) {
-        cout << "Constructor Matrice De Copiere" << endl;
+        v = nullptr;
     }
 
     void setElement(int n, int m , Complex val) {
@@ -99,21 +114,7 @@ public:
 
     virtual void alloc() = 0;
 
-    //Supraincarcare >>
-   /* friend istream& operator>>(istream& input, Matrice& mat) {
-        int n = mat.lin;
-        int m = mat.col;
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < m; j++)
-                input >> mat.v[i][j];
-
-        return input;
-    }*/
-
-
-    virtual ~Matrice() {
-        cout << "tadammmm" << '\n';
-    }
+    virtual ~Matrice() {}
 
 };
 
@@ -125,7 +126,6 @@ public:
         dim = 1;
         alloc();
         v[0][0] = Complex(0, 0);
-        cout << "Constructor Matrice Patratica Default" << endl;
     }
     
     //Constructor Parametrizat
@@ -134,7 +134,6 @@ public:
         for (int i = 0; i < dim; i++)
             for (int j = 0; j < dim; j++)
                 v[i][j] = Complex(0, 0);
-        cout << "Constructor Matrice Patratica Parametrizat" << endl;
     }
 
     //Constructor De Copiere
@@ -144,8 +143,6 @@ public:
         for (int i = 0; i < dim; i++)
             for (int j = 0; j < dim; j++)
                 v[i][j] = mat.v[i][j];
-
-        cout << "Constructor Matrice Patratica De Copiere" << endl;
     }
 
     void print() {
@@ -154,6 +151,8 @@ public:
                 cout << v[i][j] << "  ";
             cout << endl;
         }
+        cout << "Determinant: ";
+        det();
     }
 
     bool triunghiulara() {
@@ -193,14 +192,57 @@ public:
         for (int i = 0; i < dim; i++) {
             v[i] = new Complex[dim];
         }
-        cout << "Matrice patrata alocata" << '\n';
+    }
+
+    void det() {
+        if (dim == 1)
+            cout << v[0][0] << endl;
+        else if (dim == 2) {
+            Complex d, p;
+            d = v[0][0] * v[1][1];
+            p = v[0][1] * v[1][0] * Complex(-1, 0);
+            d = d + p;
+            cout << d << endl;
+        }
+        else {
+            Complex poz(0, 0), neg(0, 0), det, rowp(1, 0), rown(-1, 0);
+            for (int j = 0; j < dim; j++) {
+                for (int i = 0; i < dim; i++) {
+                    if (i + j >= dim) {
+                        rowp = rowp * v[i][i + j - dim];
+                        rown = rown * v[i + j - dim][dim - i - 1];
+                    }
+                    else {
+                        rowp = rowp * v[i][j + i];
+                        rown = rown * v[i + j][dim - i - 1];
+                    }
+                }
+                poz = poz + rowp;
+                neg = neg + rown;
+                rowp = Complex(1, 0);
+                rown = Complex(-1, 0);
+
+            }
+            det = poz + neg;
+            cout << det << endl;
+        }
+
+    }
+
+    //Supraincarcare >>
+    friend istream& operator>>(istream& input, Matrice_patratica& mat) {
+        int n = mat.dim;
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                input >> mat.v[i][j];
+
+        return input;
     }
 
     ~Matrice_patratica() {
         for (int i = 0; i < dim; i++)
             delete[] v[i];
         delete[] v;
-        cout << "Destructor Matrice patratica" << '\n';
 
     }
 
@@ -227,7 +269,6 @@ public:
         for (int i = 0; i < lin; i++)
             for (int j = 0; j < col; j++)
                 v[i][j] = Complex(0, 0);
-        cout << "-----" << '\n';
     }
 
     //De copiere
@@ -254,26 +295,50 @@ public:
         for (int i = 0; i < lin; i++) {
             v[i] = new Complex[col];
         }
-        cout << "Matrice oarecare alocata" << '\n';
+    }
+
+    //Supraincarcare >>
+    friend istream& operator>>(istream& input, Matrice_oarecare& mat) {
+        int n = mat.lin;
+        int m = mat.col;
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < m; j++)
+                input >> mat.v[i][j];
+
+        return input;
     }
 
     ~Matrice_oarecare() {
         for (int i = 0; i < lin; i++)
             delete[] v[i];
         delete[] v;
-        cout << "Destructor Matrice oarecare" << '\n';
     }
 
 };
 
 int main()
 {
+   
     Matrice_patratica mat(3);
-    mat.setElement(0, 0, Complex(3, 1));
-    mat.setElement(1, 1, Complex(3, 2));
-    mat.setElement(2, 2, Complex(3, 3));
-    mat.setElement(1, 2, Complex(3, 3));
-    mat.setElement(2, 1, Complex(3, 3));
+    mat.setElement(0, 0, Complex(3, 0));
+    mat.setElement(0, 1, Complex(3, 0));
+    mat.setElement(0, 2, Complex(3, 0));
+    mat.setElement(1, 0, Complex(1, 0));
+    mat.setElement(1, 1, Complex(2, 0));
+    mat.setElement(1, 2, Complex(5, 0));
+    mat.setElement(2, 0, Complex(5, 0));
+    mat.setElement(2, 1, Complex(6, 0));
+    mat.setElement(2, 2, Complex(2, 0));
+
     mat.print();
+
+    Matrice_oarecare mat2(2, 4);
+    mat2.print();
+
+    /*
+    Matrice_patratica mat3(2);
+    cin >> mat3;
+    mat3.print();
+    */
     return 0;
 }
