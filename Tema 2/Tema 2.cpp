@@ -152,7 +152,9 @@ public:
             cout << endl;
         }
         cout << "Determinant: ";
-        det();
+        Complex Det;
+        Det = deter(*this, dim);
+        cout << Det;
     }
 
     bool triunghiulara() {
@@ -194,39 +196,36 @@ public:
         }
     }
 
-    void det() {
-        if (dim == 1)
-            cout << v[0][0] << endl;
-        else if (dim == 2) {
-            Complex d, p;
-            d = v[0][0] * v[1][1];
-            p = v[0][1] * v[1][0] * Complex(-1, 0);
-            d = d + p;
-            cout << d << endl;
-        }
-        else {
-            Complex poz(0, 0), neg(0, 0), det, rowp(1, 0), rown(-1, 0);
-            for (int j = 0; j < dim; j++) {
-                for (int i = 0; i < dim; i++) {
-                    if (i + j >= dim) {
-                        rowp = rowp * v[i][i + j - dim];
-                        rown = rown * v[i + j - dim][dim - i - 1];
-                    }
-                    else {
-                        rowp = rowp * v[i][j + i];
-                        rown = rown * v[i + j][dim - i - 1];
+    void getCofactor(Matrice_patratica mat, Matrice_patratica &temp, int p, int q, int n) {
+        int i = 0, j = 0;
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                if (row != p && col != q) {
+                    temp.v[i][j] = mat.v[row][col];
+                    j++;
+                    if (j == n - 1) {
+                        j = 0;
+                        i++;
                     }
                 }
-                poz = poz + rowp;
-                neg = neg + rown;
-                rowp = Complex(1, 0);
-                rown = Complex(-1, 0);
-
             }
-            det = poz + neg;
-            cout << det << endl;
-        }
 
+        }
+    }
+
+    Complex deter(Matrice_patratica mat, int n) {
+        Complex D;
+        if (n == 1)
+            return mat.v[0][0];
+        Matrice_patratica temp(n);
+        Complex sign(1, 0);
+        for (int f = 0; f < n; f++) {
+            getCofactor(mat, temp, 0, f, n);
+            D = D + (sign * mat.v[0][f] * deter(temp, n - 1));
+            Complex neg(-1, 0);
+            sign = sign * neg;  
+        }
+        return D;
     }
 
     //Supraincarcare >>
@@ -321,19 +320,17 @@ int main()
    
     Matrice_patratica mat(3);
     mat.setElement(0, 0, Complex(3, 0));
-    mat.setElement(0, 1, Complex(3, 0));
-    mat.setElement(0, 2, Complex(3, 0));
-    mat.setElement(1, 0, Complex(1, 0));
-    mat.setElement(1, 1, Complex(2, 0));
+    mat.setElement(0, 1, Complex(3, 3));
+    mat.setElement(1, 0, Complex(2, 0));
+    mat.setElement(1, 1, Complex(5, 0));
+
     mat.setElement(1, 2, Complex(5, 0));
-    mat.setElement(2, 0, Complex(5, 0));
+    mat.setElement(2, 0, Complex(5, 6));
     mat.setElement(2, 1, Complex(6, 0));
-    mat.setElement(2, 2, Complex(2, 0));
+    mat.setElement(2, 2, Complex(2, -8));
 
     mat.print();
-
-    Matrice_oarecare mat2(2, 4);
-    mat2.print();
+    
 
     /*
     Matrice_patratica mat3(2);
