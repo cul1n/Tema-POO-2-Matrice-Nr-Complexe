@@ -106,9 +106,7 @@ public:
         v = nullptr;
     }
 
-    void setElement(int n, int m , Complex val) {
-        v[n][m] = val;
-    }
+    virtual void setElement(int n, int m, Complex val) = 0;
 
     virtual void print() = 0;
 
@@ -130,6 +128,15 @@ public:
     
     //Constructor Parametrizat
     Matrice_patratica(int size) : dim(size) {
+        try {
+            if (dim <= 0)
+                throw(1);
+        }
+        catch (int x) {
+            cout << "Error: Bad memory allocation.";
+            exit(x);
+            }
+        
         alloc();
         for (int i = 0; i < dim; i++)
             for (int j = 0; j < dim; j++)
@@ -154,7 +161,7 @@ public:
         cout << "Determinant: ";
         Complex Det;
         Det = deter(*this, dim);
-        cout << Det;
+        cout << Det << endl;
     }
 
     bool triunghiulara() {
@@ -228,6 +235,18 @@ public:
         return D;
     }
 
+    void setElement(int n, int m, Complex val) {
+        try {
+            if (n < 0 || m < 0 || n >= dim || m >=dim)
+                throw 2;
+        }
+        catch (int x) {
+            cout << "Error: Out of range.";
+            exit(x);
+        }
+        v[n][m] = val;
+    }
+
     //Supraincarcare >>
     friend istream& operator>>(istream& input, Matrice_patratica& mat) {
         int n = mat.dim;
@@ -262,6 +281,15 @@ public:
 
     //Parametrizat
     Matrice_oarecare(int n, int m) {
+        try {
+            if (n <= 0 || m <= 0)
+                throw 1;
+        }
+        catch (int x) {
+            cout << "Error: Bad memory allocation.";
+            exit(x);
+        }
+
         lin = n;
         col = m;
         alloc();
@@ -287,6 +315,18 @@ public:
                 cout << v[i][j] << "  ";
             cout << endl;
         }
+    }
+
+    void setElement(int n, int m, Complex val) {
+        try {
+            if (n < 0 || m < 0 || n >= lin || m >= col)
+                throw 2;
+        }
+        catch (int x) {
+            cout << "Error: Out of range.";
+            exit(x);
+        }
+        v[n][m] = val;
     }
 
     void alloc() {
@@ -319,6 +359,7 @@ int main()
 {
    
     Matrice_patratica mat(3);
+    Matrice_oarecare mat1(3,1);
     mat.setElement(0, 0, Complex(3, 0));
     mat.setElement(0, 1, Complex(3, 3));
     mat.setElement(1, 0, Complex(2, 0));
@@ -328,12 +369,16 @@ int main()
     mat.setElement(2, 0, Complex(5, 6));
     mat.setElement(2, 1, Complex(6, 0));
     mat.setElement(2, 2, Complex(2, -8));
-
-    mat.print();
     
+    mat.print();
 
-    /*
-    Matrice_patratica mat3(2);
+    mat1.setElement(0, 0, Complex(5, 0));
+    mat1.setElement(1, 0, Complex(5, 6));
+    mat1.setElement(2, 0, Complex(6, 0));
+
+    mat1.print();
+
+   /* Matrice_patratica mat3(2);
     cin >> mat3;
     mat3.print();
     */
