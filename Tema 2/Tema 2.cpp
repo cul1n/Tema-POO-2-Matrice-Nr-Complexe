@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 using namespace std;
 
 
@@ -10,20 +11,20 @@ public:
     //Constructori
     //Default
     Complex() {
-        real = 0;
-        imaginar = 0;
+        this->real = 0;
+        this->imaginar = 0;
     }
 
     //Parametrizat
     Complex(float a, float b) {
-        real = a;
-        imaginar = b;
+        this->real = a;
+        this->imaginar = b;
     }
 
     //De copiere
-    Complex(const Complex &ob) {
-        real = ob.real;
-        imaginar = ob.imaginar;
+    Complex(const Complex& ob) {
+        this->real = ob.real;
+        this->imaginar = ob.imaginar;
     }
 
     void setReal(float x) {
@@ -54,7 +55,7 @@ public:
             output << ob.real;
         else if (!ob.real)
             output << ob.imaginar << 'i';
-        else 
+        else
             output << ob.real << " + " << ob.imaginar << 'i';
         return output;
     }
@@ -66,18 +67,18 @@ public:
         return *this;
     }
 
-    Complex operator+(const Complex& ob) {
-        Complex res;
-        res.real = real + ob.real;
-        res.imaginar = imaginar + ob.imaginar;
-        return res;
+    friend Complex operator+(const Complex& ob, const Complex& ob1) {
+        Complex* res = new Complex;
+        res->real = ob.real + ob1.real;
+        res->imaginar = ob.imaginar + ob1.imaginar;
+        return *res;
     }
 
-    Complex operator*(const Complex& ob) {
-        Complex res;
-        res.real = real * ob.real - imaginar * ob.imaginar;
-        res.imaginar = real * ob.imaginar + imaginar * ob.real;
-        return res;
+    friend Complex operator*(const Complex& ob, const Complex& ob1) {
+        Complex* res = new Complex;
+        res->real = ob.real * ob1.real - ob.imaginar * ob1.imaginar;
+        res->imaginar = ob.real * ob1.imaginar + ob.imaginar * ob1.real;
+        return *res;
     }
 
     //Destructor
@@ -93,12 +94,24 @@ public:
     //Constructori
     //Default
     Matrice() {
-        v = nullptr;
+        alloc(1, 1);
+        v[0][0] = Complex(0, 0);
     }
 
     //Parametrizat
     Matrice(int n, int m) {
-        v = nullptr;
+        try {
+            if (n <= 0 || m <= 0)
+                throw 1;
+        }
+        catch (int x) {
+            cout << "Error: Bad memory allocation.";
+            exit(x);
+        }
+        alloc(n, m);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < m; j++)
+                v[i][j] = Complex(0, 0);
     }
 
     //De copiere
@@ -110,7 +123,13 @@ public:
 
     virtual void print() = 0;
 
-    virtual void alloc() = 0;
+
+    virtual void alloc(int n, int m) {
+        v = new Complex * [n];
+        for (int i = 0; i < n; i++) {
+            v[i] = new Complex[m];
+        }
+    }
 
     virtual ~Matrice() {}
 
@@ -120,28 +139,10 @@ class Matrice_patratica : public Matrice {
     int dim;
 public:
     //Constructor Default
-    Matrice_patratica() {
-        dim = 1;
-        alloc();
-        v[0][0] = Complex(0, 0);
-    }
-    
+    Matrice_patratica() : dim(1), Matrice() {}
+
     //Constructor Parametrizat
-    Matrice_patratica(int size) : dim(size) {
-        try {
-            if (dim <= 0)
-                throw(1);
-        }
-        catch (int x) {
-            cout << "Error: Bad memory allocation.";
-            exit(x);
-            }
-        
-        alloc();
-        for (int i = 0; i < dim; i++)
-            for (int j = 0; j < dim; j++)
-                v[i][j] = Complex(0, 0);
-    }
+    Matrice_patratica(int size) : dim(size), Matrice(size, size) {}
 
     //Constructor De Copiere
     Matrice_patratica(const Matrice_patratica& mat) {
@@ -152,6 +153,7 @@ public:
                 v[i][j] = mat.v[i][j];
     }
 
+    //Functie de afisare + determinant
     void print() {
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++)
@@ -164,6 +166,7 @@ public:
         cout << Det << endl;
     }
 
+    //Functie care verifica daca matricea patratica este triunghiulara
     bool triunghiulara() {
         if (t_sup() || t_inf())
             return true;
@@ -186,6 +189,7 @@ public:
         return true;
     }
 
+    //Funcite care verifica daca matricea patratica este diagonala
     bool diagonala() {
         if (t_sup() && t_inf()) {
             for (int i = 0; i < dim; i++)
@@ -196,14 +200,15 @@ public:
         return false;
     }
 
+    //Functie de alocare a memorie
     void alloc() {
-        v = new Complex*[dim];
+        v = new Complex * [dim];
         for (int i = 0; i < dim; i++) {
             v[i] = new Complex[dim];
         }
     }
 
-    void getCofactor(Matrice_patratica mat, Matrice_patratica &temp, int p, int q, int n) {
+    void getCofactor(Matrice_patratica mat, Matrice_patratica& temp, int p, int q, int n) {
         int i = 0, j = 0;
         for (int row = 0; row < n; row++) {
             for (int col = 0; col < n; col++) {
@@ -220,6 +225,7 @@ public:
         }
     }
 
+    //Determinantul
     Complex deter(Matrice_patratica mat, int n) {
         Complex D;
         if (n == 1)
@@ -230,14 +236,15 @@ public:
             getCofactor(mat, temp, 0, f, n);
             D = D + (sign * mat.v[0][f] * deter(temp, n - 1));
             Complex neg(-1, 0);
-            sign = sign * neg;  
+            sign = sign * neg;
         }
         return D;
     }
 
+    //Functie de setare a unui element din matrice
     void setElement(int n, int m, Complex val) {
         try {
-            if (n < 0 || m < 0 || n >= dim || m >=dim)
+            if (n < 0 || m < 0 || n >= dim || m >= dim)
                 throw 2;
         }
         catch (int x) {
@@ -257,6 +264,23 @@ public:
         return input;
     }
 
+    //Supraincarcarea <<
+    friend ostream& operator<<(ostream& output, Matrice_patratica& mat) {
+        int n = mat.dim;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++)
+                output << mat.v[i][j] << ' ';
+            output << endl;
+        }
+        return output;
+    }
+
+    //Supraincarcarea =
+    Matrice_patratica& operator*=(Matrice_patratica const& mat) {
+        return *this;
+    }
+
+    //Destructor
     ~Matrice_patratica() {
         for (int i = 0; i < dim; i++)
             delete[] v[i];
@@ -272,31 +296,10 @@ class Matrice_oarecare : public Matrice {
 public:
     //Constructori
     //Default
-    Matrice_oarecare() {
-        lin = 1;
-        col = 1;
-        alloc();
-        v[0][0] = Complex(0, 0);
-    }
+    Matrice_oarecare() : lin(1), col(1), Matrice() {}
 
     //Parametrizat
-    Matrice_oarecare(int n, int m) {
-        try {
-            if (n <= 0 || m <= 0)
-                throw 1;
-        }
-        catch (int x) {
-            cout << "Error: Bad memory allocation.";
-            exit(x);
-        }
-
-        lin = n;
-        col = m;
-        alloc();
-        for (int i = 0; i < lin; i++)
-            for (int j = 0; j < col; j++)
-                v[i][j] = Complex(0, 0);
-    }
+    Matrice_oarecare(int n, int m) : lin(n), col(m), Matrice(n, m) {}
 
     //De copiere
     Matrice_oarecare(const Matrice_oarecare& mat) {
@@ -309,6 +312,7 @@ public:
 
     }
 
+    //Funcite de afisare
     void print() {
         for (int i = 0; i < lin; i++) {
             for (int j = 0; j < col; j++)
@@ -317,6 +321,7 @@ public:
         }
     }
 
+    //Metoda de setare a unui element
     void setElement(int n, int m, Complex val) {
         try {
             if (n < 0 || m < 0 || n >= lin || m >= col)
@@ -329,6 +334,7 @@ public:
         v[n][m] = val;
     }
 
+    //Metoda de alocare
     void alloc() {
         v = new Complex * [lin];
         for (int i = 0; i < lin; i++) {
@@ -347,6 +353,24 @@ public:
         return input;
     }
 
+    //Supraincarcarea <<
+    friend ostream& operator<<(ostream& output, Matrice_oarecare& mat) {
+        int n = mat.lin;
+        int m = mat.col;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++)
+                output << mat.v[i][j] << ' ';
+            output << endl;
+        }
+        return output;
+    }
+
+    //Supraincarcarea =
+    Matrice_oarecare& operator*=(Matrice_oarecare const& mat) {
+        return *this;
+    }
+
+    //Destructor
     ~Matrice_oarecare() {
         for (int i = 0; i < lin; i++)
             delete[] v[i];
@@ -355,11 +379,37 @@ public:
 
 };
 
+
+void reading(int n) {
+    vector<Matrice_patratica> matrici;
+    int a;
+    for (int x = 0; x < n; x++) {
+        cout << "Marimea matricei: ";
+        cin >> a;
+        Matrice_patratica matr(a);
+        cin >> matr;
+        matrici.push_back(matr);
+    }
+    cout << endl;
+    vector<Matrice_patratica>::iterator i;
+    for (i = matrici.begin(); i != matrici.end(); ++i) {
+        i->print();
+    }
+
+    cout << endl;
+
+}
+
 int main()
 {
-   
+    cout << "Cate matrici patratice citesti: ";
+    int n;
+    cin >> n;
+    reading(n);
+    cout << endl;
+    cout << "Alte exemple:" << endl;
     Matrice_patratica mat(3);
-    Matrice_oarecare mat1(3,1);
+    Matrice_oarecare mat1(3, 1);
     mat.setElement(0, 0, Complex(3, 0));
     mat.setElement(0, 1, Complex(3, 3));
     mat.setElement(1, 0, Complex(2, 0));
@@ -369,7 +419,7 @@ int main()
     mat.setElement(2, 0, Complex(5, 6));
     mat.setElement(2, 1, Complex(6, 0));
     mat.setElement(2, 2, Complex(2, -8));
-    
+
     mat.print();
 
     mat1.setElement(0, 0, Complex(5, 0));
@@ -377,10 +427,5 @@ int main()
     mat1.setElement(2, 0, Complex(6, 0));
 
     mat1.print();
-
-   /* Matrice_patratica mat3(2);
-    cin >> mat3;
-    mat3.print();
-    */
     return 0;
 }
